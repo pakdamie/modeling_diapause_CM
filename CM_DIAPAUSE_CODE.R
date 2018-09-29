@@ -2,7 +2,7 @@ library(deSolve)
 library(geosphere)
 library(here)
 
-###You need to load the temperature function
+###You need toy load the temperature function
 
 load(here("Data","sub.RData"))
 
