@@ -8,7 +8,8 @@ load(here("Data","sub.RData"))
 
 PHOTO_PERIOD_GEOSPHERE <- geosphere::daylength(40, 1:366)
 DIFF <- diff(PHOTO_PERIOD_GEOSPHERE)
-PP_DIFF= c(rep(DIFF,length.out=365))
+###Change this based on how many years you watnt to run out for
+PP_DIFF= c(rep(DIFF,length.out=365*5))
 
 MODEL_DDE_CM_DIA = function(t, y, parms) {
   
@@ -73,37 +74,23 @@ MODEL_DDE_CM_DIA = function(t, y, parms) {
   B =10.52* exp(-1 / 2 * (TT - 24.629) ^ 2 / ( 3.427  ^ 2))
   
   #Development rate (including the diapause termination rate)
-  alphaE <- 0
-  alphaL1 <-0
-  alphaL2 <- 0
-  alphaL3 <- 0
-  alphaL4 <-0.305/(1+ exp(- 0.429*(TT - 21.54)))
+  alphaE <- 0.1927/(1+ exp(-0.3039*(TT - 18.5929)))
+  alphaL1 <- 0.30/(1+ exp(- 0.327*(TT - 17.60  )))
+  alphaL2 <- 0.457/(1+ exp(- 0.2301*(TT - 21.23)))
+  alphaL3 <- 0.338/(1+ exp(- 0.350*(TT - 18.45)))
+  alphaL4 <- 0.305/(1+ exp(- 0.429*(TT - 21.54)))
   alphaL5 <- 0.33/(1+ exp(- 0.2144*(TT - 20.94)))
-  alphaP <- 0
-  alphaA <-   0
+  alphaP <- 0.09287/(1+ exp(-0.28966 * (TT - 18.48736 )))
+  alphaA <-   0.1707 /(1+ exp(-0.1830*(TT - 20.2206)))
   alphaDL <- 0.7543/(1+ exp(0.2392 *(TT + 7.1729 )))
   
   #Mortality Function (all quadratic, if it's over 1, set to 1. If it's negative,
   ### set to 0)
-  deltaE <- 0
-  deltaE[deltaE <0 ]<-0
-  deltaE[deltaE > 1] <- 1
-  
-  deltaL = 0
-  deltaL[deltaL <0 ]<-0
-  deltaL[deltaL > 1] <- 1
-  
-  deltaP =0
-  deltaP[deltaP <0] <- 0
-  deltaP[deltaP > 1] <- 1
-  
-  deltaA = 0
-  deltaA[deltaA <0] <- 0
-  deltaA[deltaA > 1] <- 1
-  
-  deltaDL <-   0
-  deltaDL[deltaDL <0] <- 0
-  deltaDL[deltaDL > 1] <- 1
+  deltaE <- 0.00056*(TT)^2 -0.038 *TT + 0.65
+  deltaL <- 0.00067*(TT)^2 -0.017*TT+0.04
+  deltaP <- -1.598e-05*(TT)^2 + (6.787e-05  *TT) + 1.606e-02
+  deltaA <- 3.328e-04*(TT)^2-  1.179e-03  *TT + 2.452e-02 
+  deltaDL <-  3.328e-05*(TT)^2-  1.179e-03  *TT + 2.452e-02 
   
   ###DIAPAUSE INDUCTION RATES- I used the change in photoperiod to get
   ###the shape I want.
@@ -225,7 +212,7 @@ MODEL_DDE_CM_DIA = function(t, y, parms) {
   list(res)
   
 }
-tstep = seq(1,365,1)
+tstep = seq(1,365*5,1)
 
 nE=8 #The number of subcompartments in the egg-stage
 nL1 =8 #The number of subcompartments in larval instar 1
@@ -246,8 +233,8 @@ yinit = c(
   L3 = rep(0,nL3),
   L4 = rep(0,nL4),
   L5 = rep(0,nL5),
-  DL4 =rep(1,nDL4),
-  DL5 =rep(1,nDL5),
+  DL4 =rep(2,nDL4),
+  DL5 =rep(0,nDL5),
   P = rep(0,nP),
   A.r = rep(0,nA.r),
   A.s = 0
@@ -269,7 +256,7 @@ yout<- ode(
   func = MODEL_DDE_CM_DIA,
   parms=p)
 
-E<-as.double(rowSums(yout[,(2:(nE+1))]))
+E<-(rowSums(yout[,(2:(nE+1))]))
 plot(E,type='l',main='E')
 
 L1<- rowSums(yout[,(nE+2):(nE+nL1+1)])
@@ -300,4 +287,5 @@ plot(P, type='l',main ='P')
 
 A.r<- rowSums(yout[,(nE+nL1+nL2 + nL3+nL4+nL5+nDL4 + nDL5+nP+2):
                      (nE+nL1+nL2 + nL3+nL4+nL5+nDL4 +nDL5+nP+nA.r +1)])
-plot(A.r,type='l',main='A.R')
+plot(scale(A.r),type='l',main='A.R')
+
